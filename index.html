@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#2f6f9f" />
+<title>呼吸治療組 每日業務量填寫</title>
+<style>
+  :root {
+    --bg: #f4f7f9;
+    --panel: #ffffff;
+    --ink: #15222d;
+    --muted: #657486;
+    --line: #d8e1ea;
+    --blue: #2f6f9f;
+    --blue-dark: #204e73;
+    --teal: #0f8f87;
+    --green: #2d7d46;
+    --amber-soft: #fff5d6;
+    --amber-line: #ebdba8;
+    --red: #a54427;
+    --red-soft: #fff0ec;
+    --shadow: 0 14px 32px rgba(25, 44, 61, 0.08);
+    color-scheme: light;
+    font-family: "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", "Segoe UI", -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--ink);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  .app {
+    width: min(560px, calc(100vw - 24px));
+    margin: 0 auto;
+    padding: 18px 0 60px;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 0 4px;
+  }
+  .brand-logo {
+    display: block;
+    width: 100%;
+    max-width: 460px;
+    height: auto;
+    margin: 4px auto 12px;
+  }
+  .brand { text-align: center; }
+  .brand p { margin: 0 0 2px; color: var(--teal); font-size: 12px; font-weight: 700; letter-spacing: .5px; }
+  .brand h1 { margin: 0; font-size: 22px; line-height: 1.15; }
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 4px;
+    margin-bottom: 14px;
+  }
+  .gear {
+    width: 40px; height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+  .panel h2 { margin: 0 0 14px; font-size: 16px; }
+  .row { display: grid; gap: 12px; }
+  .row-2 { grid-template-columns: 1fr 1fr; }
+  label {
+    display: grid; gap: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  input, select {
+    width: 100%;
+    height: 46px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--ink);
+    padding: 0 12px;
+    font-size: 16px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  select { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M5 8l5 5 5-5' stroke='%23657486' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 34px; }
+  input:focus, select:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(47, 111, 159, .15);
+  }
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .metric-grid > label { grid-column: span 1; }
+  .metric-grid .span-2 { grid-column: span 2; }
+  .metric-grid input[type="number"] {
+    background: var(--amber-soft);
+    border-color: var(--amber-line);
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    height: 56px;
+  }
+  .stepper {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    gap: 6px;
+    align-items: stretch;
+    margin-top: 6px;
+  }
+  .stepper button {
+    height: 56px;
+    border-radius: 10px;
+    border: 1px solid var(--amber-line);
+    background: #fff;
+    color: var(--blue-dark);
+    font-size: 22px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .stepper button:active { transform: scale(0.96); }
+  .stepper input { margin: 0; }
+  .actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .btn {
+    height: 54px;
+    border-radius: 12px;
+    border: 0;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--blue); color: #fff; }
+  .btn.primary:disabled { opacity: .65; cursor: progress; }
+  .btn.ghost {
+    background: #fff;
+    color: var(--blue-dark);
+    border: 1px solid var(--line);
+  }
+  .btn.danger { background: var(--red); color: #fff; }
+  .status {
+    min-height: 50px;
+    border-radius: 10px;
+    padding: 12px;
+    background: #f0f5f8;
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 12px;
+    line-height: 1.45;
+  }
+  .status.ok { background: #eaf6ee; color: var(--green); }
+  .status.error { background: var(--red-soft); color: var(--red); }
+  .help {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 6px 0 0;
+    line-height: 1.5;
+  }
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(15, 28, 40, .55);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 50;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    width: 100%;
+    max-width: 560px;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+  .modal h3 { margin: 0 0 6px; font-size: 18px; }
+  .modal p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 12px; }
+  .modal label { margin-bottom: 10px; display: block; }
+  .modal textarea {
+    width: 100%; min-height: 90px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--ink);
+    background: #fff;
+    resize: vertical;
+  }
+  .pill-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    flex: 1;
+    min-width: 100px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--blue-dark);
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .summary-line {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    border-top: 1px dashed var(--line);
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .summary-line:first-of-type { border-top: 0; }
+  .summary-line b { font-size: 17px; }
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #e7f0f7;
+    color: var(--blue-dark);
+    font-size: 12px;
+    margin-left: 6px;
+  }
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 18px;
+  }
+  @media (min-width: 600px) {
+    .topbar { padding: 0 8px; }
+    .brand h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <img class="brand-logo" src="chi_mei_hospital_Chiali_blue.png" alt="奇美醫療財團法人 佳里奇美醫院" />
+  <div class="title-row">
+    <div class="brand">
+      <p>呼吸治療組</p>
+      <h1>每日業務量填寫</h1>
+    </div>
+    <button class="gear" id="settingsBtn" aria-label="設定" title="設定 Webhook">⚙</button>
+  </div>
+
+  <form class="panel" id="form" autocomplete="off">
+    <h2 id="formTitle">填寫今日資料</h2>
+    <div class="row row-2">
+      <label>
+        姓名
+        <select id="employee" required>
+          <option value="">請選擇</option>
+          <option>黃惠鈴</option>
+          <option>蔡柏暘</option>
+          <option>李旻蒨</option>
+          <option>楊婷媚</option>
+          <option>蔡如屏</option>
+          <option>劉家玉</option>
+        </select>
+      </label>
+      <label>
+        日期
+        <input type="date" id="date" required />
+      </label>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <div style="display:flex; justify-content: space-between; align-items: baseline;">
+        <label style="margin:0">當日業務量</label>
+        <span class="badge" id="dayTotal">合計 0</span>
+      </div>
+    </div>
+
+    <div class="metric-grid">
+      <label>
+        ICU 呼吸器
+        <div class="stepper">
+          <button type="button" data-step="-1" data-target="icuVent">−</button>
+          <input type="number" inputmode="numeric" id="icuVent" min="0" step="1" value="0" />
+          <button type="button" data-step="1" data-target="icuVent">＋</button>
+        </div>
+      </label>
+      <label>
+        RCW 呼吸器
+        <div class="stepper">
+          <button type="button" data-step="-1" data-target="rcwVent">−</button>
+          <input type="number" inputmode="numeric" id="rcwVent" min="0" step="1" value="0" />
+          <button type="button" data-step="1" data-target="rcwVent">＋</button>
+        </div>
+      </label>
+      <label>
+        ICU 氧療
+        <div class="stepper">
+          <button type="button" data-step="-1" data-target="icuOxygen">−</button>
+          <input type="number" inputmode="numeric" id="icuOxygen" min="0" step="1" value="0" />
+          <button type="button" data-step="1" data-target="icuOxygen">＋</button>
+        </div>
+      </label>
+      <label>
+        病房呼吸器
+        <div class="stepper">
+          <button type="button" data-step="-1" data-target="wardVent">−</button>
+          <input type="number" inputmode="numeric" id="wardVent" min="0" step="1" value="0" />
+          <button type="button" data-step="1" data-target="wardVent">＋</button>
+        </div>
+      </label>
+      <label class="span-2">
+        拍痰
+        <div class="stepper">
+          <button type="button" data-step="-1" data-target="chestPt">−</button>
+          <input type="number" inputmode="numeric" id="chestPt" min="0" step="1" value="0" />
+          <button type="button" data-step="1" data-target="chestPt">＋</button>
+        </div>
+      </label>
+      <label class="span-2">
+        備註（特殊狀況可填，例如「8+1」、加班代班、特殊個案）
+        <input type="text" id="note" maxlength="200" placeholder="可空白" />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="submitBtn" type="submit">送出</button>
+      <button class="btn ghost" id="copyBtn" type="button">複製本筆資料（給主管貼回 Excel）</button>
+    </div>
+    <div class="status" id="status" aria-live="polite">準備好，請選擇姓名與日期。</div>
+    <p class="help">送出方式：若已設定 Webhook，將自動寫入 OneDrive 上的 Excel；未設定時請按「複製本筆資料」貼到 LINE 或 Email 給主管。</p>
+  </form>
+
+  <div class="panel" id="historyPanel" hidden>
+    <h2>本次階段已送出</h2>
+    <div id="historyList"></div>
+    <div class="actions">
+      <button class="btn ghost" id="clearHistory" type="button">清空本機紀錄</button>
+    </div>
+  </div>
+
+  <p class="footer">v1 · 行動填寫表單 · 呼吸治療組</p>
+</div>
+
+<!-- 設定彈窗 -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>連線設定</h3>
+    <p>把 Power Automate 的「When a HTTP request is received」HTTP POST URL 貼到這裡。設好以後，這台裝置送出就會直接寫進 OneDrive 上的 Excel。</p>
+    <label>
+      Webhook URL
+      <textarea id="webhookUrl" placeholder="https://prod-xx.westus.logic.azure.com:443/workflows/..."></textarea>
+    </label>
+    <label>
+      共用密語（可選，PA 流程裡比對使用）
+      <input type="text" id="webhookSecret" placeholder="例：rt-jiali-2026" />
+    </label>
+    <div class="pill-row">
+      <button class="pill" id="testWebhook" type="button">測試連線</button>
+      <button class="pill" id="clearWebhook" type="button">清除設定</button>
+      <button class="pill" id="closeModal" type="button" style="background:var(--blue); color:#fff; border:0;">關閉</button>
+    </div>
+    <p class="help" style="margin-top:14px;">Webhook URL 只存在這台裝置的瀏覽器（localStorage），不會上傳到任何地方。</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const STORAGE = {
+  employee: "rt.lastEmployee",
+  webhook: "rt.webhookUrl",
+  secret: "rt.webhookSecret",
+  history: "rt.recentEntries",
+};
+
+const METRICS = [
+  ["icuVent",   "ICU 呼吸器"],
+  ["rcwVent",   "RCW 呼吸器"],
+  ["icuOxygen", "ICU 氧療"],
+  ["wardVent",  "病房呼吸器"],
+  ["chestPt",   "拍痰"],
+];
+
+const $ = (id) => document.getElementById(id);
+const form = $("form");
+const employeeSel = $("employee");
+const dateInp = $("date");
+const noteInp = $("note");
+const statusBox = $("status");
+const submitBtn = $("submitBtn");
+const copyBtn = $("copyBtn");
+const dayTotalBadge = $("dayTotal");
+const historyPanel = $("historyPanel");
+const historyList = $("historyList");
+
+function setStatus(msg, kind = "") {
+  statusBox.textContent = msg;
+  statusBox.className = "status" + (kind ? " " + kind : "");
+}
+
+function todayTPE() {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(new Date());
+}
+
+function readMetrics() {
+  const out = {};
+  let total = 0;
+  for (const [key] of METRICS) {
+    const raw = $(key).value;
+    const n = Number(raw);
+    out[key] = Number.isFinite(n) && n >= 0 ? n : 0;
+    total += out[key];
+  }
+  return { metrics: out, total };
+}
+
+function recalcTotal() {
+  const { total } = readMetrics();
+  dayTotalBadge.textContent = "合計 " + total;
+}
+
+function bindSteppers() {
+  document.querySelectorAll(".stepper button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = $(btn.dataset.target);
+      const step = Number(btn.dataset.step);
+      const next = Math.max(0, (Number(target.value) || 0) + step);
+      target.value = next;
+      recalcTotal();
+    });
+  });
+  document.querySelectorAll('.stepper input[type="number"]').forEach((inp) => {
+    inp.addEventListener("input", recalcTotal);
+    inp.addEventListener("focus", (e) => e.target.select());
+  });
+}
+
+function restorePrefs() {
+  const last = localStorage.getItem(STORAGE.employee);
+  if (last) employeeSel.value = last;
+  employeeSel.addEventListener("change", () => {
+    if (employeeSel.value) localStorage.setItem(STORAGE.employee, employeeSel.value);
+  });
+  dateInp.value = todayTPE();
+}
+
+/* ---- 歷史紀錄（本機） ---- */
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(STORAGE.history) || "[]"); }
+  catch { return []; }
+}
+function saveHistory(arr) {
+  localStorage.setItem(STORAGE.history, JSON.stringify(arr.slice(0, 20)));
+}
+function renderHistory() {
+  const arr = loadHistory();
+  if (!arr.length) { historyPanel.hidden = true; return; }
+  historyPanel.hidden = false;
+  historyList.innerHTML = "";
+  arr.forEach((rec) => {
+    const div = document.createElement("div");
+    div.className = "summary-line";
+    const status = rec.delivery === "webhook" ? "已上傳" : (rec.delivery === "copied" ? "已複製" : "待送");
+    div.innerHTML = `
+      <div>
+        <div style="color:var(--muted); font-size:12px;">${rec.submittedAt}</div>
+        <b>${rec.employee} · ${rec.date}</b>
+        <div style="color:var(--muted); font-size:12px;">合計 ${rec.total}${rec.note ? "｜" + rec.note : ""}</div>
+      </div>
+      <span class="badge">${status}</span>
+    `;
+    historyList.appendChild(div);
+  });
+}
+
+/* ---- 設定（webhook） ---- */
+const modalBg = $("modalBg");
+$("settingsBtn").addEventListener("click", () => {
+  $("webhookUrl").value = localStorage.getItem(STORAGE.webhook) || "";
+  $("webhookSecret").value = localStorage.getItem(STORAGE.secret) || "";
+  modalBg.classList.add("open");
+});
+$("closeModal").addEventListener("click", () => {
+  const url = $("webhookUrl").value.trim();
+  const sec = $("webhookSecret").value.trim();
+  if (url) localStorage.setItem(STORAGE.webhook, url); else localStorage.removeItem(STORAGE.webhook);
+  if (sec) localStorage.setItem(STORAGE.secret, sec); else localStorage.removeItem(STORAGE.secret);
+  modalBg.classList.remove("open");
+  setStatus(url ? "已儲存 Webhook，下一次送出將自動上傳。" : "未設定 Webhook，請用「複製本筆資料」傳給主管。", url ? "ok" : "");
+});
+$("clearWebhook").addEventListener("click", () => {
+  $("webhookUrl").value = ""; $("webhookSecret").value = "";
+});
+$("testWebhook").addEventListener("click", async () => {
+  const url = $("webhookUrl").value.trim();
+  if (!url) { alert("請先貼上 Webhook URL"); return; }
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ test: true, secret: $("webhookSecret").value.trim() }),
+    });
+    alert("收到回應：" + res.status + " " + res.statusText);
+  } catch (err) {
+    alert("連線失敗：" + err.message);
+  }
+});
+
+/* ---- 送出 ---- */
+function buildPayload() {
+  const { metrics, total } = readMetrics();
+  const employee = employeeSel.value;
+  const date = dateInp.value;
+  if (!employee) throw new Error("請選擇姓名");
+  if (!date) throw new Error("請選擇日期");
+  const d = new Date(date + "T00:00:00+08:00");
+  if (isNaN(d.getTime())) throw new Error("日期格式錯誤");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = d.getDate();
+  return {
+    employee,
+    date,
+    year: d.getFullYear(),
+    month,
+    day,
+    metrics,
+    total,
+    note: noteInp.value.trim(),
+    secret: localStorage.getItem(STORAGE.secret) || "",
+    submittedAt: new Date().toISOString(),
+    client: "mobile-html-v1",
+  };
+}
+
+function summarizeText(p) {
+  const parts = METRICS.map(([k, label]) => `${label}=${p.metrics[k]}`).join("、");
+  return `[呼吸治療] ${p.date} ${p.employee}｜${parts}｜合計 ${p.total}${p.note ? "｜備註：" + p.note : ""}`;
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  }
+}
+
+copyBtn.addEventListener("click", async () => {
+  try {
+    const p = buildPayload();
+    const text = summarizeText(p);
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      const arr = loadHistory();
+      arr.unshift({ ...p, delivery: "copied" });
+      saveHistory(arr); renderHistory();
+      setStatus("已複製文字到剪貼簿，可貼到 LINE / Email 給主管。", "ok");
+    } else {
+      setStatus("複製失敗，請手動長按下方文字複製：\n" + text, "error");
+    }
+  } catch (err) {
+    setStatus(err.message, "error");
+  }
+});
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  let p;
+  try { p = buildPayload(); }
+  catch (err) { setStatus(err.message, "error"); return; }
+
+  const webhook = localStorage.getItem(STORAGE.webhook);
+  if (!webhook) {
+    const text = summarizeText(p);
+    const ok = await copyToClipboard(text);
+    const arr = loadHistory();
+    arr.unshift({ ...p, delivery: ok ? "copied" : "pending" });
+    saveHistory(arr); renderHistory();
+    setStatus(ok
+      ? "尚未設定 Webhook，已自動複製這筆資料到剪貼簿。請貼到 LINE / Email 給主管。"
+      : "尚未設定 Webhook 且自動複製失敗。請按「複製本筆資料」再試。",
+      ok ? "ok" : "error");
+    return;
+  }
+
+  submitBtn.disabled = true;
+  setStatus("上傳中…");
+  try {
+    const res = await fetch(webhook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(p),
+    });
+    if (!res.ok) throw new Error("伺服器回應 " + res.status);
+    const arr = loadHistory();
+    arr.unshift({ ...p, delivery: "webhook" });
+    saveHistory(arr); renderHistory();
+    setStatus(`${p.employee} ${p.month}月${p.day}日 已上傳，合計 ${p.total}。`, "ok");
+    /* 重設數值，但保留姓名與日期 */
+    METRICS.forEach(([k]) => { $(k).value = 0; });
+    noteInp.value = "";
+    recalcTotal();
+  } catch (err) {
+    setStatus("上傳失敗：" + err.message + "\n可改按「複製本筆資料」傳給主管。", "error");
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+$("clearHistory").addEventListener("click", () => {
+  if (confirm("確定清空本機紀錄？（不會影響已寫入 Excel 的資料）")) {
+    localStorage.removeItem(STORAGE.history);
+    renderHistory();
+  }
+});
+
+bindSteppers();
+restorePrefs();
+recalcTotal();
+renderHistory();
+</script>
+</body>
+</html>
