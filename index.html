@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#2f6f9f" />
 <title>呼吸治療組 每日業務量填寫</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js" defer></script>
 <style>
   :root {
     --bg: #f4f7f9;
@@ -382,6 +383,17 @@
       <button class="pill" id="closeModal" type="button" style="background:var(--blue); color:#fff; border:0;">關閉</button>
     </div>
     <p class="help" style="margin-top:14px;">Webhook URL 只存在這台裝置的瀏覽器（localStorage），不會上傳到任何地方。</p>
+
+    <hr style="border:0; border-top:1px dashed var(--line); margin:18px 0 14px;" />
+    <h3 style="margin: 0 0 6px;">產生員工專用 QR Code</h3>
+    <p>把目前的 Webhook URL + 共用密語打包成一張 QR。組員掃完一次後，他們的手機就自動寫入 Excel — 不必再手動設定。<br />
+    （URL 編碼在 # 後面，<b>不會送到 GitHub 或任何伺服器</b>，只在掃描端的瀏覽器讀取。）</p>
+    <div class="pill-row">
+      <button class="pill" id="genQrBtn" type="button" style="background:var(--teal); color:#fff; border:0;">產生 QR</button>
+      <button class="pill" id="copyShareUrlBtn" type="button">複製連結</button>
+      <button class="pill" id="downloadQrBtn" type="button" disabled>下載 PNG</button>
+    </div>
+    <div id="qrBox" style="margin-top:14px; text-align:center;"></div>
   </div>
 </div>
 
@@ -394,6 +406,29 @@ const STORAGE = {
   secret: "rt.webhookSecret",
   history: "rt.recentEntries",
 };
+
+/* ---- 從網址 fragment 自動匯入設定（一掃即用） ---- */
+(function importFromHash() {
+  if (!window.location.hash || window.location.hash.length < 2) return;
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const wh = params.get("wh");
+  const sc = params.get("s");
+  let imported = false;
+  if (wh) { try { localStorage.setItem(STORAGE.webhook, decodeURIComponent(wh)); imported = true; } catch {} }
+  if (sc) { try { localStorage.setItem(STORAGE.secret, decodeURIComponent(sc)); imported = true; } catch {} }
+  if (imported) {
+    // 清除網址列上的敏感字串
+    history.replaceState(null, "", window.location.pathname);
+    // 延後顯示通知（等 setStatus 等變數初始化好）
+    setTimeout(() => {
+      const sb = document.getElementById("status");
+      if (sb) {
+        sb.textContent = "已自動匯入設定，填完按送出即直接寫入 Excel。";
+        sb.className = "status ok";
+      }
+    }, 100);
+  }
+})();
 
 const METRICS = [
   ["icuVent",   "ICU 呼吸器"],
@@ -525,9 +560,77 @@ $("testWebhook").addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ test: true, secret: $("webhookSecret").value.trim() }),
     });
-    alert("收到回應：" + res.status + " " + res.statusText);
+    if (res.status === 200) {
+      alert("✅ 連線正常 (200)。整條流程暢通。");
+    } else if (res.status === 401) {
+      alert("❌ 密語錯誤 (401)。請確認共用密語與 Power Automate 流程裡的字串一致。");
+    } else if (res.status === 502 || res.status === 500) {
+      alert("✅ 連線可達、密語正確。\n(回應 " + res.status + " 是因為測試資料不完整，正式填寫送出會正常寫入)");
+    } else {
+      alert("⚠ 收到回應：" + res.status + " " + res.statusText + "\n請截圖找主管確認");
+    }
   } catch (err) {
     alert("連線失敗：" + err.message);
+  }
+});
+
+/* ---- 產生員工專用 QR Code ---- */
+function buildShareUrl() {
+  const wh = (localStorage.getItem(STORAGE.webhook) || $("webhookUrl").value || "").trim();
+  const sc = (localStorage.getItem(STORAGE.secret) || $("webhookSecret").value || "").trim();
+  if (!wh) throw new Error("請先填好 Webhook URL");
+  const base = window.location.origin + window.location.pathname;
+  const params = new URLSearchParams();
+  params.set("wh", wh);
+  if (sc) params.set("s", sc);
+  return base + "#" + params.toString();
+}
+
+$("genQrBtn").addEventListener("click", async () => {
+  try {
+    const url = buildShareUrl();
+    const box = $("qrBox");
+    box.innerHTML = "";
+    if (typeof QRCode === "undefined") {
+      box.innerHTML = '<p style="color:var(--red); font-size:13px;">QR Code 函式庫沒載入到。網路擋了 jsdelivr？請改用「複製連結」傳給組員。</p>';
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    box.appendChild(canvas);
+    await QRCode.toCanvas(canvas, url, {
+      errorCorrectionLevel: "M",
+      margin: 2,
+      width: 320,
+      color: { dark: "#204e73", light: "#ffffff" },
+    });
+    const note = document.createElement("p");
+    note.className = "help";
+    note.style.marginTop = "8px";
+    note.textContent = "員工掃此 QR 即可一鍵設定。建議列印或傳到 LINE 群。請勿公開貼到網路（含 Webhook URL）。";
+    box.appendChild(note);
+    $("downloadQrBtn").disabled = false;
+    $("downloadQrBtn").dataset.dataUrl = canvas.toDataURL("image/png");
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+$("downloadQrBtn").addEventListener("click", () => {
+  const url = $("downloadQrBtn").dataset.dataUrl;
+  if (!url) return;
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "員工專用_每日填寫_QR.png";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+});
+
+$("copyShareUrlBtn").addEventListener("click", async () => {
+  try {
+    const url = buildShareUrl();
+    await navigator.clipboard.writeText(url);
+    alert("✅ 連結已複製。可傳 LINE 給組員，他們點一下即自動設定。");
+  } catch (err) {
+    alert(err.message);
   }
 });
 
