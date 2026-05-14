@@ -291,6 +291,17 @@
       </label>
     </div>
 
+    <div style="margin-top: 12px;">
+      <label>
+        班別
+        <select id="shift" required>
+          <option value="D">D · 白班（×1）</option>
+          <option value="E">E · 小夜班（×0.5）</option>
+          <option value="N">N · 大夜班（×0.5）</option>
+        </select>
+      </label>
+    </div>
+
     <div style="margin-top: 14px;">
       <div style="display:flex; justify-content: space-between; align-items: baseline;">
         <label style="margin:0">當日業務量</label>
@@ -442,6 +453,7 @@ const $ = (id) => document.getElementById(id);
 const form = $("form");
 const employeeSel = $("employee");
 const dateInp = $("date");
+const shiftSel = $("shift");
 const noteInp = $("note");
 const statusBox = $("status");
 const submitBtn = $("submitBtn");
@@ -524,7 +536,7 @@ function renderHistory() {
     div.innerHTML = `
       <div>
         <div style="color:var(--muted); font-size:12px;">${rec.submittedAt}</div>
-        <b>${rec.employee} · ${rec.date}</b>
+        <b>${rec.employee} · ${rec.date} · ${rec.shift || "D"}</b>
         <div style="color:var(--muted); font-size:12px;">合計 ${rec.total}${rec.note ? "｜" + rec.note : ""}</div>
       </div>
       <span class="badge">${status}</span>
@@ -639,8 +651,10 @@ function buildPayload() {
   const { metrics, total } = readMetrics();
   const employee = employeeSel.value;
   const date = dateInp.value;
+  const shift = shiftSel.value || "D";
   if (!employee) throw new Error("請選擇姓名");
   if (!date) throw new Error("請選擇日期");
+  if (!["D", "E", "N"].includes(shift)) throw new Error("請選擇班別");
   const d = new Date(date + "T00:00:00+08:00");
   if (isNaN(d.getTime())) throw new Error("日期格式錯誤");
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -651,18 +665,19 @@ function buildPayload() {
     year: d.getFullYear(),
     month,
     day,
+    shift,
     metrics,
     total,
     note: noteInp.value.trim(),
     secret: localStorage.getItem(STORAGE.secret) || "",
     submittedAt: new Date().toISOString(),
-    client: "mobile-html-v1",
+    client: "mobile-html-v2",
   };
 }
 
 function summarizeText(p) {
   const parts = METRICS.map(([k, label]) => `${label}=${p.metrics[k]}`).join("、");
-  return `[呼吸治療] ${p.date} ${p.employee}｜${parts}｜合計 ${p.total}${p.note ? "｜備註：" + p.note : ""}`;
+  return `[呼吸治療] ${p.date} ${p.employee} 班別=${p.shift}｜${parts}｜合計 ${p.total}${p.note ? "｜備註：" + p.note : ""}`;
 }
 
 async function copyToClipboard(text) {
