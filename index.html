@@ -460,6 +460,11 @@ const DEFAULTS = {
   }
 })();
 
+try {
+  if (!localStorage.getItem(STORAGE.webhook)) localStorage.setItem(STORAGE.webhook, DEFAULTS.webhook);
+  if (!localStorage.getItem(STORAGE.secret)) localStorage.setItem(STORAGE.secret, DEFAULTS.secret);
+} catch {}
+
 function readUrlParams() {
   if (window.location.search && window.location.search.length > 1) {
     try {
@@ -606,8 +611,8 @@ function renderHistory() {
 /* ---- 設定（webhook） ---- */
 const modalBg = $("modalBg");
 $("settingsBtn").addEventListener("click", () => {
-  $("webhookUrl").value = localStorage.getItem(STORAGE.webhook) || "";
-  $("webhookSecret").value = localStorage.getItem(STORAGE.secret) || "";
+  $("webhookUrl").value = localStorage.getItem(STORAGE.webhook) || DEFAULTS.webhook;
+  $("webhookSecret").value = localStorage.getItem(STORAGE.secret) || DEFAULTS.secret;
   modalBg.classList.add("open");
 });
 $("closeModal").addEventListener("click", () => {
@@ -846,6 +851,12 @@ renderHistory();
 if (!getEffectiveWebhook()) {
   const b = document.getElementById("noSetupBanner");
   if (b) b.hidden = false;
+} else {
+  const sb = document.getElementById("status");
+  if (sb && !sb.textContent.trim()) {
+    sb.textContent = "✅ 系統已連線，可直接選擇姓名、班別並填入業務量。";
+    sb.className = "status ok";
+  }
 }
 
 const ua = navigator.userAgent || "";
