@@ -265,12 +265,12 @@
 <body>
 <div class="app">
   <div id="noSetupBanner" class="alert-banner" hidden>
-    ⚠️ 此裝置尚未設定。請聯絡主管取得「員工專用連結」或掃 QR Code。
-    <br><small>直接打開根網址無法填寫，每天請從主管提供的連結進入。</small>
+    ❌ 必須使用 Chrome 或 Safari 瀏覽器填寫
+    <br><small>LINE / FB / Messenger / Instagram 內建瀏覽器無法儲存設定。請點右上角「⋯」→「在 Chrome / Safari 中開啟」，或聯絡主管取得專用連結。</small>
   </div>
   <div id="inAppBanner" class="alert-banner warn" hidden>
-    ⚠️ 偵測到您正在使用社群 App 內建瀏覽器（LINE / FB / Messenger）。設定可能無法儲存。
-    <br><small>請點右上角「⋯」選擇「在 Chrome / Safari 中開啟」，並把網址加入書籤。</small>
+    ⚠️ 偵測到 LINE / FB / Messenger 內建瀏覽器
+    <br><small>此瀏覽器可能無法保留設定，建議點右上角「⋯」選擇「在 Chrome / Safari 中開啟」並加入書籤，否則下次重新進入可能無法填寫。</small>
   </div>
   <img class="brand-logo" src="chi_mei_hospital_Chiali_blue.png" alt="奇美醫療財團法人 佳里奇美醫院" />
   <div class="title-row">
@@ -429,17 +429,22 @@ const STORAGE = {
   history: "rt.recentEntries",
 };
 
-/* ---- 從網址 fragment 自動匯入設定（一掃即用） ---- */
-(function importFromHash() {
-  if (!window.location.hash || window.location.hash.length < 2) return;
-  const params = new URLSearchParams(window.location.hash.slice(1));
+/* ---- 從網址 query / fragment 自動匯入設定（一掃即用） ---- */
+(function importFromUrl() {
+  let params = null;
+  if (window.location.search && window.location.search.length > 1) {
+    try { params = new URLSearchParams(window.location.search.slice(1)); } catch {}
+  }
+  if ((!params || (!params.get("wh") && !params.get("s"))) && window.location.hash && window.location.hash.length > 1) {
+    try { params = new URLSearchParams(window.location.hash.slice(1)); } catch {}
+  }
+  if (!params) return;
   const wh = params.get("wh");
   const sc = params.get("s");
   let imported = false;
   if (wh) { try { localStorage.setItem(STORAGE.webhook, decodeURIComponent(wh)); imported = true; } catch {} }
   if (sc) { try { localStorage.setItem(STORAGE.secret, decodeURIComponent(sc)); imported = true; } catch {} }
   if (imported) {
-    // 延後顯示通知（等 setStatus 等變數初始化好）
     setTimeout(() => {
       const sb = document.getElementById("status");
       if (sb) {
@@ -450,17 +455,23 @@ const STORAGE = {
   }
 })();
 
-function readHashParams() {
-  if (!window.location.hash || window.location.hash.length < 2) return null;
-  try {
-    return new URLSearchParams(window.location.hash.slice(1));
-  } catch { return null; }
+function readUrlParams() {
+  if (window.location.search && window.location.search.length > 1) {
+    try {
+      const p = new URLSearchParams(window.location.search.slice(1));
+      if (p.get("wh") || p.get("s")) return p;
+    } catch {}
+  }
+  if (window.location.hash && window.location.hash.length > 1) {
+    try { return new URLSearchParams(window.location.hash.slice(1)); } catch {}
+  }
+  return null;
 }
 
 function getEffectiveWebhook() {
   const ls = localStorage.getItem(STORAGE.webhook);
   if (ls) return ls;
-  const hp = readHashParams();
+  const hp = readUrlParams();
   if (hp) {
     const wh = hp.get("wh");
     if (wh) {
@@ -473,7 +484,7 @@ function getEffectiveWebhook() {
 function getEffectiveSecret() {
   const ls = localStorage.getItem(STORAGE.secret);
   if (ls) return ls;
-  const hp = readHashParams();
+  const hp = readUrlParams();
   if (hp) {
     const sc = hp.get("s");
     if (sc) {
@@ -637,7 +648,7 @@ function buildShareUrl() {
   const params = new URLSearchParams();
   params.set("wh", wh);
   if (sc) params.set("s", sc);
-  return base + "#" + params.toString();
+  return base + "?" + params.toString();
 }
 
 $("genQrBtn").addEventListener("click", async () => {
@@ -696,7 +707,7 @@ $("copyShareUrlBtn").addEventListener("click", async () => {
       document.body.removeChild(ta);
     }
     if (ok) {
-      alert("✅ 已複製專用網址。\n\n貼到 LINE 群組讓組員點開即可使用。\n建議組員開啟後加入書籤。");
+      alert("✅ 已複製專用網址。\n\n貼到 LINE 給組員時，請提醒他們：\n1. 點該訊息開啟頁面後\n2. 按右上角「⋯」→「在 Chrome / Safari 中開啟」\n3. 加入書籤方便每日填寫\n\nLINE 內建瀏覽器可能無法填寫。");
     } else {
       alert("複製失敗，請手動複製：\n\n" + url);
     }
