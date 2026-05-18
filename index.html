@@ -253,6 +253,9 @@
     font-size: 12px;
     margin-top: 18px;
   }
+  .alert-banner { background:#dc2626; color:#fff; padding:12px 16px; border-radius:10px; margin-bottom:12px; font-size:14px; line-height:1.5; }
+  .alert-banner small { display:block; margin-top:4px; opacity:0.9; font-size:12px; }
+  .alert-banner.warn { background:#f59e0b; }
   @media (min-width: 600px) {
     .topbar { padding: 0 8px; }
     .brand h1 { font-size: 24px; }
@@ -261,6 +264,14 @@
 </head>
 <body>
 <div class="app">
+  <div id="noSetupBanner" class="alert-banner" hidden>
+    ⚠️ 此裝置尚未設定。請聯絡主管取得「員工專用連結」或掃 QR Code。
+    <br><small>直接打開根網址無法填寫，每天請從主管提供的連結進入。</small>
+  </div>
+  <div id="inAppBanner" class="alert-banner warn" hidden>
+    ⚠️ 偵測到您正在使用社群 App 內建瀏覽器（LINE / FB / Messenger）。設定可能無法儲存。
+    <br><small>請點右上角「⋯」選擇「在 Chrome / Safari 中開啟」，並把網址加入書籤。</small>
+  </div>
   <img class="brand-logo" src="chi_mei_hospital_Chiali_blue.png" alt="奇美醫療財團法人 佳里奇美醫院" />
   <div class="title-row">
     <div class="brand">
@@ -401,7 +412,7 @@
     （URL 編碼在 # 後面，<b>不會送到 GitHub 或任何伺服器</b>，只在掃描端的瀏覽器讀取。）</p>
     <div class="pill-row">
       <button class="pill" id="genQrBtn" type="button" style="background:var(--teal); color:#fff; border:0;">產生 QR</button>
-      <button class="pill" id="copyShareUrlBtn" type="button">複製連結</button>
+      <button class="pill" id="copyShareUrlBtn" type="button">複製專用網址</button>
       <button class="pill" id="downloadQrBtn" type="button" disabled>下載 PNG</button>
     </div>
     <div id="qrBox" style="margin-top:14px; text-align:center;"></div>
@@ -639,10 +650,27 @@ $("downloadQrBtn").addEventListener("click", () => {
 $("copyShareUrlBtn").addEventListener("click", async () => {
   try {
     const url = buildShareUrl();
-    await navigator.clipboard.writeText(url);
-    alert("✅ 連結已複製。可傳 LINE 給組員，他們點一下即自動設定。");
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(url);
+      ok = true;
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { ok = document.execCommand("copy"); } catch {}
+      document.body.removeChild(ta);
+    }
+    if (ok) {
+      alert("✅ 已複製專用網址。\n\n貼到 LINE 群組讓組員點開即可使用。\n建議組員開啟後加入書籤。");
+    } else {
+      alert("複製失敗，請手動複製：\n\n" + url);
+    }
   } catch (err) {
-    alert(err.message);
+    alert(err.message || "請先填好 Webhook URL");
   }
 });
 
@@ -767,6 +795,17 @@ bindSteppers();
 restorePrefs();
 recalcTotal();
 renderHistory();
+
+if (!localStorage.getItem(STORAGE.webhook)) {
+  const b = document.getElementById("noSetupBanner");
+  if (b) b.hidden = false;
+}
+
+const ua = navigator.userAgent || "";
+if (/Line\//i.test(ua) || /FBAN|FBAV|FB_IAB/i.test(ua) || /Messenger/i.test(ua) || /Instagram/i.test(ua)) {
+  const b = document.getElementById("inAppBanner");
+  if (b) b.hidden = false;
+}
 </script>
 </body>
 </html>
