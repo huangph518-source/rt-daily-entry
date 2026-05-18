@@ -269,8 +269,8 @@
     <br><small>LINE / FB / Messenger / Instagram 內建瀏覽器無法儲存設定。請點右上角「⋯」→「在 Chrome / Safari 中開啟」，或聯絡主管取得專用連結。</small>
   </div>
   <div id="inAppBanner" class="alert-banner warn" hidden>
-    ⚠️ 偵測到 LINE / FB / Messenger 內建瀏覽器
-    <br><small>此瀏覽器可能無法保留設定，建議點右上角「⋯」選擇「在 Chrome / Safari 中開啟」並加入書籤，否則下次重新進入可能無法填寫。</small>
+    💡 您正在使用 LINE / FB / Messenger 內建瀏覽器
+    <br><small>本系統可正常使用，但建議點右上角「⋯」選擇「在 Chrome / Safari 中開啟」並加入書籤，文字輸入與長期使用較順暢。</small>
   </div>
   <img class="brand-logo" src="chi_mei_hospital_Chiali_blue.png" alt="奇美醫療財團法人 佳里奇美醫院" />
   <div class="title-row">
@@ -429,6 +429,11 @@ const STORAGE = {
   history: "rt.recentEntries",
 };
 
+const DEFAULTS = {
+  webhook: "https://default24de0681c8f746e88da71f5b393d83.4d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c0c439af205141ff8505e7c99c58e7ae/triggers/manual/paths/invoke?api-version=1&sp=/triggers/manual/run&sv=1.0&sig=vzQLoqwcX46H5ELO1od-id-g5DjxCeevTgnJUNZY8s8",
+  secret: "rt-jiali-2026",
+};
+
 /* ---- 從網址 query / fragment 自動匯入設定（一掃即用） ---- */
 (function importFromUrl() {
   let params = null;
@@ -478,7 +483,7 @@ function getEffectiveWebhook() {
       try { return decodeURIComponent(wh); } catch { return wh; }
     }
   }
-  return "";
+  return DEFAULTS.webhook;
 }
 
 function getEffectiveSecret() {
@@ -491,7 +496,7 @@ function getEffectiveSecret() {
       try { return decodeURIComponent(sc); } catch { return sc; }
     }
   }
-  return "";
+  return DEFAULTS.secret;
 }
 
 const METRICS = [
