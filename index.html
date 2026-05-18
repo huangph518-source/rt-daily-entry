@@ -439,8 +439,6 @@ const STORAGE = {
   if (wh) { try { localStorage.setItem(STORAGE.webhook, decodeURIComponent(wh)); imported = true; } catch {} }
   if (sc) { try { localStorage.setItem(STORAGE.secret, decodeURIComponent(sc)); imported = true; } catch {} }
   if (imported) {
-    // 清除網址列上的敏感字串
-    history.replaceState(null, "", window.location.pathname);
     // 延後顯示通知（等 setStatus 等變數初始化好）
     setTimeout(() => {
       const sb = document.getElementById("status");
@@ -451,6 +449,39 @@ const STORAGE = {
     }, 100);
   }
 })();
+
+function readHashParams() {
+  if (!window.location.hash || window.location.hash.length < 2) return null;
+  try {
+    return new URLSearchParams(window.location.hash.slice(1));
+  } catch { return null; }
+}
+
+function getEffectiveWebhook() {
+  const ls = localStorage.getItem(STORAGE.webhook);
+  if (ls) return ls;
+  const hp = readHashParams();
+  if (hp) {
+    const wh = hp.get("wh");
+    if (wh) {
+      try { return decodeURIComponent(wh); } catch { return wh; }
+    }
+  }
+  return "";
+}
+
+function getEffectiveSecret() {
+  const ls = localStorage.getItem(STORAGE.secret);
+  if (ls) return ls;
+  const hp = readHashParams();
+  if (hp) {
+    const sc = hp.get("s");
+    if (sc) {
+      try { return decodeURIComponent(sc); } catch { return sc; }
+    }
+  }
+  return "";
+}
 
 const METRICS = [
   ["icuVent",   "ICU 呼吸器"],
@@ -697,7 +728,7 @@ function buildPayload() {
     metrics,
     total,
     note: noteInp.value.trim(),
-    secret: localStorage.getItem(STORAGE.secret) || "",
+    secret: getEffectiveSecret(),
     submittedAt: new Date().toISOString(),
     client: "mobile-html-v2",
   };
@@ -746,7 +777,7 @@ form.addEventListener("submit", async (e) => {
   try { p = buildPayload(); }
   catch (err) { setStatus(err.message, "error"); return; }
 
-  const webhook = localStorage.getItem(STORAGE.webhook);
+  const webhook = getEffectiveWebhook();
   if (!webhook) {
     const text = summarizeText(p);
     const ok = await copyToClipboard(text);
@@ -796,7 +827,7 @@ restorePrefs();
 recalcTotal();
 renderHistory();
 
-if (!localStorage.getItem(STORAGE.webhook)) {
+if (!getEffectiveWebhook()) {
   const b = document.getElementById("noSetupBanner");
   if (b) b.hidden = false;
 }
