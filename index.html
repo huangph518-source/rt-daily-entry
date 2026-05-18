@@ -256,6 +256,19 @@
   .alert-banner { background:#dc2626; color:#fff; padding:12px 16px; border-radius:10px; margin-bottom:12px; font-size:14px; line-height:1.5; }
   .alert-banner small { display:block; margin-top:4px; opacity:0.9; font-size:12px; }
   .alert-banner.warn { background:#f59e0b; }
+
+  .status-chip {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
   @media (min-width: 600px) {
     .topbar { padding: 0 8px; }
     .brand h1 { font-size: 24px; }
@@ -277,6 +290,7 @@
     <div class="brand">
       <p>呼吸治療組</p>
       <h1>每日業務量填寫</h1>
+      <span class="status-chip">✅ 系統已連線</span>
     </div>
     <button class="gear" id="settingsBtn" aria-label="設定" title="設定 Webhook">⚙</button>
   </div>
